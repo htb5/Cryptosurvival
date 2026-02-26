@@ -1,0 +1,48 @@
+name: BTC Alert Cron
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: btc-alert-cron
+  cancel-in-progress: false
+
+jobs:
+  trigger-alert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Validate scheduler secrets
+        env:
+          ALERT_URL: ${{ secrets.ALERT_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$ALERT_URL" ]; then
+            echo "Missing GitHub secret ALERT_URL"
+            exit 1
+          fi
+          if [ -z "$CRON_SECRET" ]; then
+            echo "Missing GitHub secret CRON_SECRET"
+            exit 1
+          fi
+
+      - name: Trigger BTC alert endpoint
+        env:
+          ALERT_URL: ${{ secrets.ALERT_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          response="$(curl --silent --show-error --fail-with-body \
+            --max-time 30 \
+            --retry 2 \
+            --retry-delay 2 \
+            -H "x-cron-secret: ${CRON_SECRET}" \
+            "${ALERT_URL}?provider=auto&equity=1000&riskPercent=1.5")"
+
+          echo "$response"
+
+          if ! printf '%s' "$response" | grep -Eq '"ok"\s*:\s*true'; then
+            echo "Scheduler call did not return ok:true"
+            exit 1
+          fi

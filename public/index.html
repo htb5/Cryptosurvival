@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Crypto Signal Desk</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <section class="panel panel-main">
+        <h1>Crypto Signal Desk</h1>
+        <p class="subhead">Spot-only buy/sell/hold/abstain signals with risk-managed sizing.</p>
+        <form id="controls" class="controls">
+          <label>
+            Symbol
+            <select id="symbol" name="symbol">
+              <option value="BTC">BTC</option>
+              <option value="ETH">ETH</option>
+              <option value="SOL">SOL</option>
+            </select>
+          </label>
+          <label>
+            Provider
+            <select id="provider" name="provider">
+              <option value="auto">Auto (CoinGecko then Binance)</option>
+              <option value="coingecko">CoinGecko</option>
+              <option value="binance">Binance</option>
+            </select>
+          </label>
+          <label>
+            Quote (Fixed)
+            <select id="quote" name="quote" disabled>
+              <option value="usd" selected>USD</option>
+            </select>
+          </label>
+          <label>
+            Equity
+            <input type="number" id="equity" name="equity" min="10" value="1000" step="1" />
+          </label>
+          <label>
+            Risk %
+            <input type="number" id="riskPercent" name="riskPercent" min="0.1" max="5" value="1.5" step="0.1" />
+          </label>
+          <label>
+            Refresh
+            <select id="refreshSec" name="refreshSec">
+              <option value="0">Manual</option>
+              <option value="30">30s</option>
+              <option value="60" selected>60s</option>
+              <option value="120">120s</option>
+            </select>
+          </label>
+          <label class="check">
+            <input type="checkbox" id="holding" name="holding" />
+            I am currently in a trade
+          </label>
+          <label class="check">
+            <input type="checkbox" id="btcAlerts" name="btcAlerts" checked />
+            Alert me on BTC BUY/SELL
+          </label>
+          <label id="entryWrap" class="hidden">
+            Entry Price
+            <input type="number" id="entryPrice" name="entryPrice" min="0.0001" step="0.0001" />
+          </label>
+          <button type="submit" id="runBtn">Analyze</button>
+        </form>
+        <p id="btcAlertMeta" class="meta">BTC alert status: waiting for scan.</p>
+      </section>
+
+      <section class="panel panel-signal">
+        <div class="signal-label">Signal</div>
+        <div id="signal" class="signal hold">HOLD</div>
+        <div id="signalMeta" class="meta">Waiting for analysis...</div>
+      </section>
+
+      <section class="panel">
+        <h2>Market + Setup</h2>
+        <div id="setup" class="grid"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Risk Plan</h2>
+        <div id="risk" class="grid"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Signal Quality</h2>
+        <div id="quality" class="grid"></div>
+      </section>
+
+      <section class="panel panel-wide">
+        <h2>Market Radar</h2>
+        <div class="meta" id="scanMeta">Loading radar...</div>
+        <div class="table-wrap">
+          <table class="radar-table">
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Signal</th>
+                <th>Confidence</th>
+                <th>Price</th>
+                <th>Edge EV R</th>
+                <th>P(+EV)</th>
+                <th>Risk x</th>
+                <th>Win Rate</th>
+                <th>Provider</th>
+                <th>Aligned</th>
+                <th>Warn</th>
+              </tr>
+            </thead>
+            <tbody id="scanBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Reasoning</h2>
+        <ul id="reasons" class="reasons"></ul>
+      </section>
+
+      <section class="panel">
+        <h2>Warnings</h2>
+        <ul id="warnings" class="reasons"></ul>
+      </section>
+
+      <section class="panel">
+        <h2>Safety Notes</h2>
+        <ul class="reasons">
+          <li>This tool is rule-based and can be wrong. It is not financial advice.</li>
+          <li>Use hard stops and never exceed your risk cap.</li>
+          <li>Spot trading only. No leverage is used in this app.</li>
+        </ul>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

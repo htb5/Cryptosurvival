@@ -1,0 +1,270 @@
+:root {
+  --bg: #0a1c2b;
+  --bg-alt: #0f2a3f;
+  --panel: #132f46;
+  --text: #ebf4ff;
+  --muted: #9db5cb;
+  --buy: #16a34a;
+  --abstain: #38bdf8;
+  --sell: #dc2626;
+  --hold: #f59e0b;
+  --line: #2f4b63;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(1100px 700px at 10% 10%, #1c4f78 0%, transparent 60%),
+    radial-gradient(900px 500px at 90% 0%, #16384f 0%, transparent 55%),
+    linear-gradient(160deg, var(--bg) 0%, var(--bg-alt) 70%);
+  min-height: 100vh;
+}
+
+.layout {
+  width: min(1100px, 92vw);
+  margin: 2rem auto 3rem;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(12, 1fr);
+}
+
+.panel {
+  background: linear-gradient(180deg, #15354f 0%, var(--panel) 100%);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  grid-column: span 6;
+}
+
+.panel-main {
+  grid-column: span 8;
+}
+
+.panel-signal {
+  grid-column: span 4;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.panel-wide {
+  grid-column: span 12;
+}
+
+h1,
+h2 {
+  margin: 0 0 0.5rem;
+}
+
+h2 {
+  font-size: 1rem;
+  color: #d2e5f8;
+}
+
+.subhead {
+  margin: 0 0 1rem;
+  color: var(--muted);
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(130px, 1fr));
+  gap: 0.8rem;
+}
+
+label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.92rem;
+  color: #d6e6f5;
+}
+
+input,
+select,
+button {
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  padding: 0.55rem 0.65rem;
+  font-size: 0.95rem;
+}
+
+input,
+select {
+  background: #0b2234;
+  color: var(--text);
+}
+
+button {
+  background: linear-gradient(120deg, #1c6ea4, #2496d4);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+button:hover {
+  filter: brightness(1.08);
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  align-self: end;
+}
+
+.hidden {
+  display: none;
+}
+
+.signal-label {
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.signal {
+  margin-top: 0.25rem;
+  font-size: clamp(2.2rem, 6vw, 3.2rem);
+  font-weight: 800;
+}
+
+.signal.buy {
+  color: var(--buy);
+}
+
+.signal.abstain {
+  color: var(--abstain);
+}
+
+.signal.sell {
+  color: var(--sell);
+}
+
+.signal.hold {
+  color: var(--hold);
+}
+
+.meta {
+  color: var(--muted);
+  margin-top: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.55rem 1rem;
+}
+
+.kv {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px dashed #35536d;
+  padding: 0.35rem 0;
+}
+
+.kv .k {
+  color: var(--muted);
+}
+
+.kv .v {
+  font-weight: 600;
+}
+
+.reasons {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: #d8e7f5;
+}
+
+.table-wrap {
+  margin-top: 0.7rem;
+  overflow-x: auto;
+}
+
+.radar-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.radar-table th,
+.radar-table td {
+  text-align: left;
+  border-bottom: 1px solid #2e4c64;
+  padding: 0.55rem 0.5rem;
+  white-space: nowrap;
+}
+
+.radar-table th {
+  color: #b8d4ea;
+  font-weight: 600;
+}
+
+.pill {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0.22rem 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.pill-buy {
+  background: rgba(22, 163, 74, 0.2);
+  color: #6af29a;
+}
+
+.pill-abstain {
+  background: rgba(56, 189, 248, 0.2);
+  color: #93ddff;
+}
+
+.pill-sell {
+  background: rgba(220, 38, 38, 0.2);
+  color: #ff8d8d;
+}
+
+.pill-hold {
+  background: rgba(245, 158, 11, 0.2);
+  color: #ffd186;
+}
+
+.grade {
+  font-weight: 700;
+}
+
+.grade-a,
+.grade-b {
+  color: #79f2a7;
+}
+
+.grade-c {
+  color: #ffd186;
+}
+
+.grade-d {
+  color: #ff9d9d;
+}
+
+@media (max-width: 900px) {
+  .panel,
+  .panel-main,
+  .panel-signal {
+    grid-column: span 12;
+  }
+
+  .controls {
+    grid-template-columns: repeat(2, minmax(130px, 1fr));
+  }
+}
