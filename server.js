@@ -225,6 +225,7 @@ app.get("/api/analysis", async (req, res) => {
 
     res.json({
       ...analysis,
+      analyzedAt: new Date().toISOString(),
       warnings,
       accountCurrency,
       riskCurrencyAligned,
