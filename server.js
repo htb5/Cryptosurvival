@@ -426,6 +426,34 @@ app.get("/api/alerts/btc", async (req, res) => {
       telegram = { sent: false, reason: "duplicate_suppressed" };
     }
 
+    const alertDeliveryFailed = shouldAlert && !preview && !telegram.sent;
+    if (alertDeliveryFailed) {
+      log("error", "btc.alert_delivery_failed", {
+        requestId: req.requestId,
+        currentAction,
+        previousAction,
+        alertKey,
+        telegram
+      });
+      return res.status(502).json({
+        ok: false,
+        error: "Signal detected but Telegram delivery failed.",
+        preview,
+        shouldAlert,
+        duplicateSuppressed,
+        currentAction,
+        previousAction,
+        baseAction: current.action,
+        transitionAction: deriveTransitionAction(current),
+        timestamp: current.timestamp,
+        transitionTimestamp: current.system?.latestTransitionTimestamp || null,
+        signalChanged,
+        marketClose: current.market.close,
+        quoteUsed: currentSnapshot.market.quoteCurrency,
+        telegram
+      });
+    }
+
     if (signalChanged || duplicateSuppressed || !telegram.sent) {
       log("info", "btc.alert_check", {
         requestId: req.requestId,
