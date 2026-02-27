@@ -39,7 +39,7 @@ function dedupeWarnings(warnings) {
 }
 
 function isCronAuthorized(req) {
-  const secret = process.env.CRON_SECRET;
+  const secret = String(process.env.CRON_SECRET || "").trim();
   if (!secret) return true;
   const authHeader = String(req.headers.authorization || "");
   const xCronSecret = String(req.headers["x-cron-secret"] || "");
