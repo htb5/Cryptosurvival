@@ -345,8 +345,10 @@ async function runAnalysis() {
     const providerDelta = data.providerDiagnostics?.providerCloseDiffPct;
     const providerDeltaText =
       providerDelta == null || Number.isNaN(providerDelta) ? "" : ` | src diff ${fmtPct(providerDelta)}`;
+    const candleTime = data.timestamp ? new Date(data.timestamp).toLocaleString() : "-";
+    const updatedTime = data.analyzedAt ? new Date(data.analyzedAt).toLocaleString() : new Date().toLocaleString();
     signalMetaEl.textContent =
-      `${data.symbol} | ${data.providerUsed} | ${new Date(data.timestamp).toLocaleString()}${providerDeltaText}`;
+      `${data.symbol} | ${data.providerUsed} | Candle ${candleTime} | Updated ${updatedTime}${providerDeltaText}`;
 
     renderGrid(setupEl, [
       ["Close", `${fmt(data.market.close)} ${data.quoteUsed}`],
