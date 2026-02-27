@@ -42,6 +42,12 @@ jobs:
 
           echo "$response"
 
+          if printf '%s' "$response" | grep -Eq '"shouldAlert"\s*:\s*true' && \
+             printf '%s' "$response" | grep -Eq '"sent"\s*:\s*false'; then
+            echo "Signal detected but Telegram delivery failed"
+            exit 1
+          fi
+
           if ! printf '%s' "$response" | grep -Eq '"ok"\s*:\s*true'; then
             echo "Scheduler call did not return ok:true"
             exit 1
