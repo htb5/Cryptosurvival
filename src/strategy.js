@@ -380,10 +380,68 @@ function detectDrift(trades) {
   };
 }
 
+function summarizeTradeSlice(trades) {
+  const values = trades
+    .map((trade) => trade.netR)
+    .filter((value) => Number.isFinite(value));
+  if (!values.length) {
+    return {
+      trades: 0,
+      expectancyR: NaN,
+      winRate: NaN,
+      profitFactor: NaN
+    };
+  }
+
+  let wins = 0;
+  let grossProfitR = 0;
+  let grossLossR = 0;
+  for (const value of values) {
+    if (value > 0) {
+      wins += 1;
+      grossProfitR += value;
+    } else if (value < 0) {
+      grossLossR += Math.abs(value);
+    }
+  }
+
+  return {
+    trades: values.length,
+    expectancyR: average(values),
+    winRate: (wins / values.length) * 100,
+    profitFactor: grossLossR > 0 ? grossProfitR / grossLossR : NaN
+  };
+}
+
+function buildOutOfSampleStats(trades) {
+  if (!trades.length) {
+    return {
+      trainTrades: 0,
+      oosTrades: 0,
+      oosExpectancyR: NaN,
+      oosWinRate: NaN,
+      oosProfitFactor: NaN
+    };
+  }
+
+  const splitIndex = clamp(Math.floor(trades.length * 0.6), 1, trades.length);
+  const trainStats = summarizeTradeSlice(trades.slice(0, splitIndex));
+  const oosStats = summarizeTradeSlice(trades.slice(splitIndex));
+
+  return {
+    trainTrades: trainStats.trades,
+    oosTrades: oosStats.trades,
+    oosExpectancyR: oosStats.expectancyR,
+    oosWinRate: oosStats.winRate,
+    oosProfitFactor: oosStats.profitFactor
+  };
+}
+
 function buildEdgeGuardian({ trades, currentSignalScore, requestedRiskPercent }) {
   const edge = computeEdgeEstimate(trades, currentSignalScore);
   const calibration = walkForwardBrier(trades);
   const drift = detectDrift(trades);
+  const oos = buildOutOfSampleStats(trades);
 
   let riskMultiplier = 1;
   const throttleReasons = [];
@@ -407,6 +465,14 @@ function buildEdgeGuardian({ trades, currentSignalScore, requestedRiskPercent })
     riskMultiplier *= 0.5;
     throttleReasons.push("recent live edge degraded versus baseline");
   }
+  if (oos.oosTrades < 5) {
+    riskMultiplier *= 0.8;
+    throttleReasons.push("out-of-sample trade count is below 5");
+  }
+  if (Number.isFinite(oos.oosExpectancyR) && oos.oosExpectancyR <= 0) {
+    riskMultiplier *= 0.55;
+    throttleReasons.push("out-of-sample expectancy is non-positive");
+  }
   riskMultiplier = clamp(riskMultiplier, 0.1, 1);
 
   const highConfidencePositiveEdge =
@@ -418,7 +484,16 @@ function buildEdgeGuardian({ trades, currentSignalScore, requestedRiskPercent })
     edge.probabilityPositive >= 0.6;
   const enoughEvidence = Number.isFinite(edge.effectiveSampleSize) && edge.effectiveSampleSize >= 8;
   const calibrationAcceptable = !Number.isFinite(calibration.brier) || calibration.brier <= 0.3;
-  const gateAllow = highConfidencePositiveEdge && enoughEvidence && calibrationAcceptable && !drift.hardBlock;
+  const oosAcceptable =
+    oos.oosTrades >= 5 &&
+    Number.isFinite(oos.oosExpectancyR) &&
+    oos.oosExpectancyR > 0;
+  const gateAllow =
+    highConfidencePositiveEdge &&
+    enoughEvidence &&
+    calibrationAcceptable &&
+    oosAcceptable &&
+    !drift.hardBlock;
 
   let gateReason = "Edge Guardian allows trade.";
   if (!gateAllow) {
@@ -428,6 +503,8 @@ function buildEdgeGuardian({ trades, currentSignalScore, requestedRiskPercent })
       gateReason = "Edge Guardian blocked: post-cost edge is not positive with high confidence.";
     } else if (!calibrationAcceptable) {
       gateReason = "Edge Guardian blocked: walk-forward calibration is unreliable.";
+    } else if (!oosAcceptable) {
+      gateReason = "Edge Guardian blocked: out-of-sample expectancy evidence is insufficient.";
     } else if (drift.hardBlock) {
       gateReason = "Edge Guardian blocked: severe negative drift detected.";
     } else {
@@ -449,6 +526,11 @@ function buildEdgeGuardian({ trades, currentSignalScore, requestedRiskPercent })
     effectiveSampleSize: edge.effectiveSampleSize,
     walkForwardBrier: calibration.brier,
     walkForwardSamples: calibration.samples,
+    oosTrainTrades: oos.trainTrades,
+    oosTrades: oos.oosTrades,
+    oosExpectancyR: oos.oosExpectancyR,
+    oosWinRate: oos.oosWinRate,
+    oosProfitFactor: oos.oosProfitFactor,
     driftBaselineExpectancyR: drift.baselineExpectancyR,
     driftRecentExpectancyR: drift.recentExpectancyR,
     driftDeltaR: drift.deltaR,
@@ -729,6 +811,12 @@ function buildWarnings({ staleHours, volumeCoverage, backtest, confidenceScore, 
   if (edgeGuardian && edgeGuardian.driftDegraded) {
     warnings.push("Recent edge drift is negative; risk throttle is active.");
   }
+  if (edgeGuardian && Number.isFinite(edgeGuardian.oosTrades) && edgeGuardian.oosTrades < 5) {
+    warnings.push("Out-of-sample trade count is small; validation confidence is limited.");
+  }
+  if (edgeGuardian && Number.isFinite(edgeGuardian.oosExpectancyR) && edgeGuardian.oosExpectancyR <= 0) {
+    warnings.push("Out-of-sample expectancy is non-positive.");
+  }
   return warnings;
 }
 
@@ -778,9 +866,12 @@ export function analyzeSymbol({
   if (Number.isFinite(edgeGuardian.probabilityPositivePct) && edgeGuardian.probabilityPositivePct >= 60) {
     confidenceScore += 5;
   }
+  if (Number.isFinite(edgeGuardian.oosExpectancyR) && edgeGuardian.oosExpectancyR > 0) confidenceScore += 5;
   if (setup.volumeCoverage < 0.75) confidenceScore -= 10;
   if (staleHours > 36) confidenceScore -= 20;
   if (backtest.trades < 8) confidenceScore -= 5;
+  if (edgeGuardian.oosTrades < 5) confidenceScore -= 5;
+  if (Number.isFinite(edgeGuardian.oosExpectancyR) && edgeGuardian.oosExpectancyR <= 0) confidenceScore -= 5;
   confidenceScore = clamp(Math.round(confidenceScore), 0, 100);
 
   const reasons = [];
@@ -921,6 +1012,11 @@ export function analyzeSymbol({
       effectiveSampleSize: to2(edgeGuardian.effectiveSampleSize),
       walkForwardBrier: to2(edgeGuardian.walkForwardBrier),
       walkForwardSamples: edgeGuardian.walkForwardSamples,
+      oosTrainTrades: edgeGuardian.oosTrainTrades,
+      oosTrades: edgeGuardian.oosTrades,
+      oosExpectancyR: to2(edgeGuardian.oosExpectancyR),
+      oosWinRate: to2(edgeGuardian.oosWinRate),
+      oosProfitFactor: to2(edgeGuardian.oosProfitFactor),
       driftBaselineExpectancyR: to2(edgeGuardian.driftBaselineExpectancyR),
       driftRecentExpectancyR: to2(edgeGuardian.driftRecentExpectancyR),
       driftDeltaR: to2(edgeGuardian.driftDeltaR),
