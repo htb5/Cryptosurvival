@@ -16,8 +16,10 @@ Rule-based web app for spot crypto signals (`BUY` / `SELL` / `HOLD` / `ABSTAIN`)
 - Runs an **Edge Guardian** meta-layer that can block entries with `ABSTAIN` unless:
   - post-cost expected net `R` is positive,
   - the 95% confidence interval lower bound is positive,
-  - probability of positive edge is high enough.
+  - probability of positive edge is high enough,
+  - out-of-sample expectancy evidence is positive.
 - Uses walk-forward calibration + drift detection to auto-throttle risk when edge quality degrades.
+- Shows out-of-sample validation metrics (trade count, expectancy, win rate, profit factor).
 - Runs a built-in historical backtest (with fee/slippage assumptions) and computes confidence score.
 - Scans BTC/ETH/SOL in one radar table so you can compare signals quickly.
 - Uses provider fallback/caching and auto-selects the strongest fresh data source.
