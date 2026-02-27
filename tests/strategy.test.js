@@ -68,6 +68,11 @@ test("returns ABSTAIN when setup is active but Edge Guardian blocks", () => {
   assert.equal(result.setup.breakout, true);
   assert.equal(result.setup.volumeExpansion, true);
   assert.equal(result.edgeGuardian.gateAllow, false);
+  assert.equal(typeof result.edgeGuardian.oosTrainTrades, "number");
+  assert.equal(typeof result.edgeGuardian.oosTrades, "number");
+  assert.ok(Object.hasOwn(result.edgeGuardian, "oosExpectancyR"));
+  assert.ok(Object.hasOwn(result.edgeGuardian, "oosWinRate"));
+  assert.ok(Object.hasOwn(result.edgeGuardian, "oosProfitFactor"));
   assert.equal(result.action, "ABSTAIN");
 });
 
