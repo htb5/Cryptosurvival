@@ -96,6 +96,7 @@ Telegram alert:
   - `TELEGRAM_BOT_TOKEN`
   - `TELEGRAM_CHAT_ID`
   - `CRON_SECRET` (recommended; secures cron endpoint)
+- If `CRON_SECRET` is changed in Vercel, redeploy production so the new value is active.
 - Endpoint:
   - `GET /api/alerts/btc`
   - Optional `preview=true` to test without sending.
@@ -104,11 +105,14 @@ Telegram alert:
   - `BUY` only when a fresh model transition occurs and full entry gating still passes.
   - `SELL` on fresh model exit transitions.
   - Duplicate sends are suppressed in-memory for repeated same-candle checks.
+  - If an alert should be sent but Telegram delivery fails, `/api/alerts/btc` returns non-OK so schedulers fail loudly.
 - External scheduler included:
   - GitHub Actions workflow: `.github/workflows/btc-alert-cron.yml` (`*/15 * * * *`).
-  - Required GitHub repository secrets:
+  - It reads GitHub secrets:
     - `ALERT_URL` = `https://cryptosurvival.vercel.app/api/alerts/btc`
     - `CRON_SECRET` = same value as Vercel `CRON_SECRET`
+  - It calls `${ALERT_URL}?provider=auto&equity=1000&riskPercent=1.5` with header `x-cron-secret: ${CRON_SECRET}`.
+  - It fails the run if an actionable signal is detected but Telegram delivery reports `sent: false`.
   - Once pushed to GitHub, the scheduler runs every 15 minutes automatically.
 
 ## Deploy to Vercel
